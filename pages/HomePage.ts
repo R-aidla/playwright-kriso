@@ -1,6 +1,7 @@
 import { Page, Locator, expect } from '@playwright/test';
 import { BasePage } from './BasePage';
 import { CartPage } from './CartPage';
+import { ProductPage } from './ProductPage';
 
 export class HomePage extends BasePage {
   private readonly url = 'https://www.kriso.ee/';
@@ -11,16 +12,18 @@ export class HomePage extends BasePage {
   private readonly backButton: Locator;
   private readonly forwardButton: Locator;
   private readonly noResultsMessage: Locator;
+  private readonly guitarCatagoryButton: Locator;
 
   constructor(page: Page) {
     super(page);
-    this.resultsTotal = this.page.locator('.sb-results-total');
+    this.resultsTotal = this.page.locator('.search-results-wrap.srdb-english2 .sb-results-total');
     this.addToCartLink = this.page.getByRole('link', { name: 'Lisa ostukorvi' });
     this.addToCartMessage = this.page.locator('.item-messagebox');
     this.cartCount = this.page.locator('.cart-products');
     this.backButton = this.page.locator('.cartbtn-event.back');
     this.forwardButton = this.page.locator('.cartbtn-event.forward');
     this.noResultsMessage = this.page.locator('.msg.msg-info');
+    this.guitarCatagoryButton = this.page.locator('#navigation').getByRole('link', { name: 'Muusikaraamatud ja noodid' });
   }
 
   async openUrl() {
@@ -52,6 +55,11 @@ export class HomePage extends BasePage {
   async openShoppingCart() {
     await this.forwardButton.click();
     return new CartPage(this.page);
+  }
+  
+  async openMusicCatalog() {
+    await this.guitarCatagoryButton.click();
+    return new ProductPage(this.page);
   }
 
   async verifyNoProductsFoundMessage() {

@@ -17,45 +17,60 @@ let page: Page;
 
 test.describe('Search for Books by Keywords', () => {
 
-    test.beforeAll(async ({ browser }) => {
-      const context = await browser.newContext();
-      page = await context.newPage();
-  
-      await page.goto('https://www.kriso.ee/');
-      await page.getByRole('button', { name: 'Nõustun' }).click();
-    });
-  
-    test.afterAll(async () => {
-      await page.context().close();
-    });
+  test.beforeAll(async ({ browser }) => {
+    const context = await browser.newContext();
+    page = await context.newPage();
 
-    test('Test logo is visible', async () => {
-      const logo = page.locator('.logo-icon');
-      await expect(logo).toBeVisible();
-    }); 
-
-  test('Test no products found', async () => {
-    await page.locator('#top-search-text').click();
-    await page.locator('#top-search-text').fill('jaslkfjalskjdkls');
-    await page.locator('#top-search-btn-wrap').click();
-
-    await expect(page.locator('.msg.msg-info')).toContainText('Teie poolt sisestatud märksõnale vastavat raamatut ei leitud. Palun proovige uuesti!');
+    await page.goto('https://www.kriso.ee/');
+    await page.getByRole('button', { name: 'Nõustun' }).click();
   });
 
-    test('Test search results contain keyword', async () => {
-    await page.locator('#top-search-text').click();
-    await page.locator('#top-search-text').fill('tolkien');
-    await page.locator('#top-search-btn-wrap').click();
-
-    //TODO check results contain keyword
+  test.afterAll(async () => {
+    await page.context().close();
   });
 
-    test('Test search by ISBN', async () => {
-    await page.locator('#top-search-text').click();
-    await page.locator('#top-search-text').fill('9780307588371');
-    await page.locator('#top-search-btn-wrap').click();
+  test('Open homepage and verify logo/title', async () => {
+    await expect(page).toHaveTitle(/Kriso/i);
+    await expect(page.getByRole('link', { name: 'K', exact: true })).toBeVisible();
+  });
+  
 
-    //TODO check correct book is shown
+  test('No products found for invalid keyword', async () => {
+
+    await page.getByRole('textbox', { name: 'Pealkiri, autor, ISBN, märksõ' }).fill('jaslkfjalskjdkls');
+    await page.getByRole('button', { name: 'Search' }).click();
+
+    await expect(page.getByText(/vastavat raamatut ei leitud/i)).toBeVisible();
+  });
+
+  test('Search results contain keyword', async () => {
+
+    await page.getByRole('textbox', { name: 'Pealkiri, autor, ISBN, märksõ' }).fill('tolkien');
+    await page.getByRole('button', { name: 'Search' }).click();
+
+    const resultsText = await page
+      .getByText(/Otsingu vasteid leitud/i)
+      .locator('..')
+      .getByText(/\d+/)
+      .first()
+      .textContent();
+
+    let count = Number(resultsText?.replace(/\D/g, '')) || 0;
+    expect(count).toBeGreaterThan(0);
+
+    await expect(
+      page.getByText(/tolkien/i).first()
+    ).toBeVisible();
+  });
+
+  test('Search by ISBN returns correct book', async () => {
+
+    await page.getByRole('textbox', { name: 'Pealkiri, autor, ISBN, märksõ' }).fill('9780307588371');
+    await page.getByRole('button', { name: 'Search' }).click();
+
+    await expect(
+      page.getByText(/gone girl/i).first()
+    ).toBeVisible();
   });
 
 });
